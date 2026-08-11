@@ -21,6 +21,26 @@ namespace VDV
     public class VDV_Class : MelonMod
     {
         public static GameObject gameManager;
+        public static MelonPreferences_Entry<bool> berets;
+        public static MelonPreferences_Entry<bool> armpatches;
+        public static MelonPreferences_Entry<bool> mute_logger;
+        public static MelonPreferences_Entry<bool> rifle_bool;
+
+        public override void OnInitializeMelon()
+        {
+            MelonPreferences_Category cfg = MelonPreferences.CreateCategory("VDV Soviet Airborne");
+            berets = cfg.CreateEntry<bool>("Berets", true);
+            berets.Comment = "Disable to restore steel helmets";
+
+            armpatches = cfg.CreateEntry<bool>("Armpatches", true);
+            armpatches.Comment = "Disable to hide VDV patches on sleeves";
+
+            rifle_bool = cfg.CreateEntry<bool>("AKS-74s", true);
+            rifle_bool.Comment = "Folding skeletal metal stocks replace solid wood";
+
+            mute_logger = cfg.CreateEntry<bool>("Mute console Log", false);
+            mute_logger.Comment = "Mutes log messages in the MelonLoader console.";
+        }
         public override void OnSceneWasLoaded(int buildIndex, string sceneName)
         {
             if (sceneName == "MainMenu2_Scene" || sceneName == "t64_menu" || sceneName == "MainMenu2-1_Scene")
@@ -53,14 +73,19 @@ namespace VDV
                 Mesh originalMesh = torso_smr.sharedMesh;
 
                 var vdv_bundle = AssetBundle.LoadFromFile(Path.Combine(MelonEnvironment.ModsDirectory + "/VDV", "vdv"));
-                if (vdv_bundle == null) MelonLogger.Error("Could not load test asset bundle");
+                if (vdv_bundle == null) { 
+                    MelonLogger.Error("Could not load test asset bundle");
+                    continue;
+                }
                 
-                GameObject armpatch = GameObject.Instantiate(vdv_bundle.LoadAsset("assets/armpatch.obj") as GameObject);
-                armpatch.transform.parent = upperLeftArm;
-                armpatch.transform.position = upperLeftArm.position;
-                armpatch.transform.localPosition = new Vector3(-0.17f, -0.05f, -0.035f);
-                armpatch.transform.localRotation = Quaternion.Euler(0f, 270f, 128f);
-                armpatch.transform.Find("default").GetComponent<MeshRenderer>().material.color = new Color(0.7f, 0.7f, 0.7f);
+                if (armpatches.Value) {
+                    GameObject armpatch = GameObject.Instantiate(vdv_bundle.LoadAsset("assets/armpatch.obj") as GameObject);
+                    armpatch.transform.parent = upperLeftArm;
+                    armpatch.transform.position = upperLeftArm.position;
+                    armpatch.transform.localPosition = new Vector3(-0.17f, -0.05f, -0.035f);
+                    armpatch.transform.localRotation = Quaternion.Euler(0f, 270f, 128f);
+                    armpatch.transform.Find("default").GetComponent<MeshRenderer>().material.color = new Color(0.7f, 0.7f, 0.7f);
+                }
 
                 GameObject vdv_suit = GameObject.Instantiate(vdv_bundle.LoadAsset("assets/vdv_alt.obj") as GameObject);
                 MeshFilter vdv_mf = vdv_suit.transform.Find("default").GetComponent<MeshFilter>();
@@ -119,81 +144,92 @@ namespace VDV
                 torso_smr.material.SetTexture("_Normal", vdv_suit_nm);
                 torso_smr.material.SetTexture("_Occlusion", vdv_suit_ao);                                
 
-                troop.transform.Find("Troop Base/RED_OBR73_KHAKI/helmet").gameObject.SetActive(false);
-                var beret_bundle = AssetBundle.LoadFromFile(Path.Combine(MelonEnvironment.ModsDirectory + "/VDV", "beret"));
-                if (beret_bundle == null) MelonLogger.Error("Could not load test asset bundle");
-                GameObject beret = GameObject.Instantiate(beret_bundle.LoadAsset("assets/VDV_beret.obj") as GameObject);
-                Texture2D beret_rm = beret_bundle.LoadAsset<Texture2D>("assets/vdv_beret_rm.png");
-                beret_bundle.Unload(false);
-                beret.transform.parent = head;
-                beret.transform.position = head.position;
-                MeshRenderer beret_mr = beret.transform.Find("default").GetComponent<MeshRenderer>();                
-                Material beret_mat = new Material(Shader.Find("GHPC/UniformShader"));
-                beret_mat.SetTexture("_Albedo", beret_mr.material.GetTexture("_MainTex"));
-                beret_mat.SetTexture("_Normal", beret_mr.material.GetTexture("_BumpMap"));
-                beret_mat.SetTexture("_Occlusion", beret_mr.material.GetTexture("_OcclusionMap"));
-                beret_mat.SetTexture("_Smoothness", beret_mr.material.GetTexture("_SpecGlossMap"));
-                beret_mat.SetTexture("_regions", beret_rm);
-                beret_mat.SetTexture("_PaintMask", torso_smr.material.GetTexture("_PaintMask"));
-                beret_mat.name = "beret";
-                beret_mr.material = beret_mat;
+                if (berets.Value) {
+                    troop.transform.Find("Troop Base/RED_OBR73_KHAKI/helmet").gameObject.SetActive(false);
+                    var beret_bundle = AssetBundle.LoadFromFile(Path.Combine(MelonEnvironment.ModsDirectory + "/VDV", "beret"));
+                    if (beret_bundle == null) {
+                        MelonLogger.Error("Could not load test asset bundle");
+                        continue;
+                    }
+                    GameObject beret = GameObject.Instantiate(beret_bundle.LoadAsset("assets/VDV_beret.obj") as GameObject);
+                    Texture2D beret_rm = beret_bundle.LoadAsset<Texture2D>("assets/vdv_beret_rm.png");
+                    beret_bundle.Unload(false);
+                    beret.transform.parent = head;
+                    beret.transform.position = head.position;
+                    MeshRenderer beret_mr = beret.transform.Find("default").GetComponent<MeshRenderer>();                
+                    Material beret_mat = new Material(Shader.Find("GHPC/UniformShader"));
+                    beret_mat.SetTexture("_Albedo", beret_mr.material.GetTexture("_MainTex"));
+                    beret_mat.SetTexture("_Normal", beret_mr.material.GetTexture("_BumpMap"));
+                    beret_mat.SetTexture("_Occlusion", beret_mr.material.GetTexture("_OcclusionMap"));
+                    beret_mat.SetTexture("_Smoothness", beret_mr.material.GetTexture("_SpecGlossMap"));
+                    beret_mat.SetTexture("_regions", beret_rm);
+                    beret_mat.SetTexture("_PaintMask", torso_smr.material.GetTexture("_PaintMask"));
+                    beret_mat.name = "beret";
+                    beret_mr.material = beret_mat;
                 
-                InfantryMaterialController imc = troop.transform.Find("Troop Base").GetComponent<InfantryMaterialController>();
-                GHPC.Utility.RendererMaterial beret_rendmat = new GHPC.Utility.RendererMaterial();
-                beret_rendmat.MaterialIndex = 0;
-                beret_rendmat.Renderer = beret_mr;
-                imc._bloodyRMaterials.Add(beret_rendmat);
-                //beret_mr.material.color = new Color(0.8f, 0.8f, 0.8f); material colour doesn't work with GHPC/UniformShader               
+                    InfantryMaterialController imc = troop.transform.Find("Troop Base").GetComponent<InfantryMaterialController>();
+                    GHPC.Utility.RendererMaterial beret_rendmat = new GHPC.Utility.RendererMaterial();
+                    beret_rendmat.MaterialIndex = 0;
+                    beret_rendmat.Renderer = beret_mr;
+                    imc._bloodyRMaterials.Add(beret_rendmat);
+                    //beret_mr.material.color = new Color(0.8f, 0.8f, 0.8f); material colour doesn't work with GHPC/UniformShader               
 
-                int seed = System.DateTime.Now.Millisecond; //berets have 40% of being straight, 40% cocked to the right, and 20% knocked back high on the forehead 
-                if (seed <= 399) { 
-                    beret.transform.localRotation = Quaternion.Euler(new Vector3(270f, 90f, 0f));
-                    beret.transform.localPosition = new Vector3(-0.135f, -0.01f, -0.008f);
-                    beret.transform.localScale = new Vector3(1f, 1.05f, 1f);
+                    int seed = System.DateTime.Now.Millisecond; //berets have 40% of being straight, 40% cocked to the right, and 20% knocked back high on the forehead 
+                    if (seed <= 399) { 
+                        beret.transform.localRotation = Quaternion.Euler(new Vector3(270f, 90f, 0f));
+                        beret.transform.localPosition = new Vector3(-0.135f, -0.01f, -0.008f);
+                        beret.transform.localScale = new Vector3(1f, 1.05f, 1f);
+                    }
+                    else if (seed > 399 && seed <= 599)
+                    {
+                        beret.transform.localRotation = Quaternion.Euler(new Vector3(280f, 270f, 180f));
+                        beret.transform.localPosition = new Vector3(-0.14f, -0.015f, -0.005f);
+                    }
+                    else
+                    {
+                        beret.transform.localRotation = Quaternion.Euler(new Vector3(280f, 255f, 180f));
+                        beret.transform.localPosition = new Vector3(-0.135f, -0.01f, -0.02f);
+                        beret.transform.localScale = new Vector3(1f, 1.05f, 1f);
+                    }
+                
+
+                    AarVisual AarVis = troop.transform.Find("Troop Base").GetComponent<AarVisual>();
+                    AarVis._renderers.Add(beret_mr);
+                    AarVis.OriginalMaterials[torso_smr] = new System.Collections.Generic.List<Material> { torso_smr.material };
+                    AarVis.OriginalMaterials.Add(beret_mr, new System.Collections.Generic.List<Material> { beret_mr.material });
                 }
-                else if (seed > 399 && seed <= 599)
-                {
-                    beret.transform.localRotation = Quaternion.Euler(new Vector3(280f, 270f, 180f));
-                    beret.transform.localPosition = new Vector3(-0.14f, -0.015f, -0.005f);
+
+                if (rifle_bool.Value) { 
+                    var rifle_bundle = AssetBundle.LoadFromFile(Path.Combine(MelonEnvironment.ModsDirectory + "/VDV", "aks74"));
+                    if (rifle_bundle == null) { 
+                        MelonLogger.Error("Could not load test asset bundle"); 
+                        continue;
+                    }
+                    GameObject aks74 = GameObject.Instantiate(rifle_bundle.LoadAsset("assets/aks74.obj") as GameObject);
+                    rifle_bundle.Unload(false);
+                    GameObject default_rifle = troop.transform.Find("Troop Base/TRP_SKELETON/weaponmain/AK74").gameObject;
+                
+                    aks74.transform.parent = default_rifle.transform;
+                    aks74.transform.position = default_rifle.transform.position;
+                    aks74.transform.localPosition = new Vector3(-0.04f, 0.04f, 0f);
+                    aks74.transform.localRotation = Quaternion.Euler(0f, 0f, 0f);
+                    aks74.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
+                
+                    SkinnedMeshRenderer default_rifle_smr = default_rifle.transform.Find("AK74/ak74").GetComponent<SkinnedMeshRenderer>();
+                    MeshRenderer new_rifle_mr = aks74.transform.Find("default").GetComponent<MeshRenderer>();
+                    new_rifle_mr.material = default_rifle_smr.material;
+                    default_rifle_smr.enabled = false;
+                    troop.transform.Find("Troop Base/TRP_SKELETON/weaponmain/AK74/AK74 Rigidbody/WPN_AK74").GetComponent<MeshRenderer>().enabled = false;
+
+                    AarVisual weapon_AAR = default_rifle.GetComponent<AarVisual>();
+                    weapon_AAR._renderers = new System.Collections.Generic.List<Renderer> { new_rifle_mr };
+                    weapon_AAR.OriginalMaterials = new System.Collections.Generic.Dictionary<Renderer, System.Collections.Generic.List<Material>> 
+                        { [new_rifle_mr] = new System.Collections.Generic.List<Material>
+                            {new_rifle_mr.material } 
+                        };
                 }
-                else
-                {
-                    beret.transform.localRotation = Quaternion.Euler(new Vector3(280f, 255f, 180f));
-                    beret.transform.localPosition = new Vector3(-0.135f, -0.01f, -0.02f);
-                    beret.transform.localScale = new Vector3(1f, 1.05f, 1f);
-                }                
 
-                AarVisual AarVis = troop.transform.Find("Troop Base").GetComponent<AarVisual>();
-                AarVis._renderers.Add(beret_mr);
-                AarVis.OriginalMaterials[torso_smr] = new System.Collections.Generic.List<Material> { torso_smr.material };
-                AarVis.OriginalMaterials.Add(beret_mr, new System.Collections.Generic.List<Material> { beret_mr.material });                
-
-                var rifle_bundle = AssetBundle.LoadFromFile(Path.Combine(MelonEnvironment.ModsDirectory + "/VDV", "aks74"));
-                if (rifle_bundle == null) MelonLogger.Error("Could not load test asset bundle");
-                GameObject aks74 = GameObject.Instantiate(rifle_bundle.LoadAsset("assets/aks74.obj") as GameObject);
-                rifle_bundle.Unload(false);
-                GameObject default_rifle = troop.transform.Find("Troop Base/TRP_SKELETON/weaponmain/AK74").gameObject;
-                
-                aks74.transform.parent = default_rifle.transform;
-                aks74.transform.position = default_rifle.transform.position;
-                aks74.transform.localPosition = new Vector3(-0.04f, 0.04f, 0f);
-                aks74.transform.localRotation = Quaternion.Euler(0f, 0f, 0f);
-                aks74.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
-                
-                SkinnedMeshRenderer default_rifle_smr = default_rifle.transform.Find("AK74/ak74").GetComponent<SkinnedMeshRenderer>();
-                MeshRenderer new_rifle_mr = aks74.transform.Find("default").GetComponent<MeshRenderer>();
-                new_rifle_mr.material = default_rifle_smr.material;
-                default_rifle_smr.enabled = false;
-                troop.transform.Find("Troop Base/TRP_SKELETON/weaponmain/AK74/AK74 Rigidbody/WPN_AK74").GetComponent<MeshRenderer>().enabled = false;
-
-                AarVisual weapon_AAR = default_rifle.GetComponent<AarVisual>();
-                weapon_AAR._renderers = new System.Collections.Generic.List<Renderer> { new_rifle_mr };
-                weapon_AAR.OriginalMaterials = new System.Collections.Generic.Dictionary<Renderer, System.Collections.Generic.List<Material>> 
-                    { [new_rifle_mr] = new System.Collections.Generic.List<Material>
-                        {new_rifle_mr.material } 
-                    };
-
-                MelonLogger.Msg(troop.name + "converted into airborne");
+                if (!mute_logger.Value) MelonLogger.Msg(troop.name + " converted into airborne");
                 troop.gameObject.AddComponent<VDVConverted>();
             }
             yield break;
