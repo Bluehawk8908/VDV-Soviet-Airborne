@@ -6,7 +6,6 @@ MelonLoader 0.6.1 is required. Extract the DLL file and /VDV/ into your /mods/ f
 
 **Known Issues**  
 -Subtle lighting errors created by seams in the mesh which cannot (yet?) be resolved do to the extraction-importation method for a SkinnedMeshRenderer.  
--Currently incompatible with the SquadLeaders mod.  
 -Dubious historicity of Soviet airborne/airmobile forces operating so close to the front, in direct contact with mechanized ground forces.  
 
 ![VDV on the move](https://i.imgur.com/GhHA3sJ.jpeg)
