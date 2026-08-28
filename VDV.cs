@@ -164,6 +164,7 @@ namespace VDV
                     beret_mat.SetTexture("_Smoothness", beret_mr.material.GetTexture("_SpecGlossMap"));
                     beret_mat.SetTexture("_regions", beret_rm);
                     beret_mat.SetTexture("_PaintMask", torso_smr.material.GetTexture("_PaintMask"));
+                    beret_mat.SetFloat("_BleedGlobal", 0f);
                     beret_mat.name = "beret";
                     beret_mr.material = beret_mat;
                 
