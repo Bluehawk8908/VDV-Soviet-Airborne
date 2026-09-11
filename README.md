@@ -1,4 +1,4 @@
-# VDV-Soviet-Airborne
+# VDV - Soviet Airborne
 A GHPC mod that converts Soviet motor-rifle infantry into VDV troops by modifying the Obr. 73 everyday field tunic to sport an open collar with sky blue facings, a branch patch on the left sleeve and a *telnyashka* underneath; replacing the helmet with a blue beret; and converting the AK74 into the skeletal folding-stock variant the AKS-74.  
 
 **Installation**  
